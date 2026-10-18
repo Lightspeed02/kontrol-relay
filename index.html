@@ -3,123 +3,855 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ESP32 Relay IoT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070b14">
+  <meta name="description" content="Dashboard IoT untuk kontrol relay ESP32 secara online.">
+  <title>ESP32 | IoT Control Center</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
   <style>
+    :root {
+      --bg: #070b14;
+      --panel: #101827;
+      --panel-light: #141f31;
+      --border: rgba(148, 163, 184, .16);
+      --text: #f1f5f9;
+      --muted: #8492a8;
+      --blue: #38bdf8;
+      --cyan: #22d3ee;
+      --green: #22c55e;
+      --red: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #eef2f7;
-      text-align: center;
-      padding: 30px 15px;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 50% -20%, #12345c 0%, transparent 55%),
+        radial-gradient(ellipse at 0% 80%, #102044 0%, transparent 40%),
+        var(--bg);
+      font-family: 'Inter', sans-serif;
+      padding: 28px 18px;
     }
-    .card {
-      background: white;
-      max-width: 380px;
-      margin: 30px auto;
-      padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 4px 18px #0001;
-    }
+
     button {
-      width: 110px;
-      padding: 15px;
-      margin: 8px;
-      border: 0;
-      border-radius: 10px;
-      color: white;
-      font-size: 17px;
-      cursor: pointer;
+      font: inherit;
     }
-    #on { background: #16a34a; }
-    #off { background: #dc2626; }
-    button:disabled { opacity: .45; cursor: not-allowed; }
-    #status { font-weight: bold; }
+
+    .container {
+      width: 100%;
+      max-width: 1050px;
+      margin: auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 55px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 45px;
+      height: 45px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: var(--cyan);
+      background: rgba(34, 211, 238, .10);
+      border: 1px solid rgba(34, 211, 238, .25);
+      font-size: 21px;
+    }
+
+    .brand-name {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1.4px;
+    }
+
+    .brand-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .secure-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: #b6c4d7;
+      font-size: 12px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow i {
+      font-size: 8px;
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.15;
+      letter-spacing: -1.8px;
+      font-weight: 800;
+    }
+
+    h1 span {
+      color: var(--cyan);
+    }
+
+    .hero p {
+      color: var(--muted);
+      margin-top: 15px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(20,31,49,.96), rgba(10,16,29,.96));
+      border-radius: 22px;
+      padding: 26px;
+      box-shadow: 0 22px 65px rgba(0,0,0,.18);
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .panel-heading h2 {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .small-label {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .connection-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 30px;
+      padding: 8px 11px;
+      background: rgba(148,163,184,.08);
+      color: #b7c3d5;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+
+    .connection-pill.online {
+      color: #86efac;
+      background: rgba(34,197,94,.10);
+    }
+
+    .connection-pill.online .dot {
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(34,197,94,.8);
+    }
+
+    .connection-pill.offline .dot {
+      background: var(--red);
+    }
+
+    .device-visual {
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 17px;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(34,211,238,.13), transparent 55%),
+        rgba(4,10,21,.45);
+      border: 1px solid rgba(56,189,248,.09);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .device-visual::before,
+    .device-visual::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(56,189,248,.12);
+      border-radius: 50%;
+      width: 190px;
+      height: 190px;
+    }
+
+    .device-visual::after {
+      width: 145px;
+      height: 145px;
+    }
+
+    .chip-icon {
+      position: relative;
+      z-index: 1;
+      width: 100px;
+      height: 100px;
+      border-radius: 25px;
+      display: grid;
+      place-items: center;
+      color: var(--cyan);
+      font-size: 44px;
+      background: linear-gradient(145deg, #1b3651, #0b1424);
+      border: 1px solid rgba(34,211,238,.35);
+      box-shadow: 0 0 40px rgba(34,211,238,.14);
+    }
+
+    .device-name {
+      z-index: 1;
+      margin-top: 20px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .device-model {
+      z-index: 1;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .metric {
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 10px;
+    }
+
+    .metric-value {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .metric-value i {
+      color: var(--cyan);
+      margin-right: 5px;
+    }
+
+    .relay-display {
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.025);
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      transition: .25s ease;
+    }
+
+    .relay-display.active {
+      border-color: rgba(34,197,94,.35);
+      background: radial-gradient(circle at 50% 0%, rgba(34,197,94,.10), transparent 75%);
+    }
+
+    .relay-icon {
+      width: 66px;
+      height: 66px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      background: rgba(148,163,184,.08);
+      color: #8b9bb1;
+      font-size: 29px;
+      margin-bottom: 16px;
+      transition: .25s;
+    }
+
+    .relay-display.active .relay-icon {
+      color: var(--green);
+      background: rgba(34,197,94,.12);
+      box-shadow: 0 0 28px rgba(34,197,94,.10);
+    }
+
+    .relay-state {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .relay-state.on {
+      color: var(--green);
+    }
+
+    .relay-caption {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 8px;
+    }
+
+    .control-title {
+      margin: 25px 0 13px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      border-radius: 13px;
+      padding: 16px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      transition: transform .18s, opacity .18s, box-shadow .18s;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(.98);
+    }
+
+    .btn:disabled {
+      opacity: .38;
+      cursor: not-allowed;
+    }
+
+    .btn-on {
+      color: white;
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      box-shadow: 0 8px 22px rgba(34,197,94,.10);
+    }
+
+    .btn-off {
+      color: white;
+      background: linear-gradient(135deg, #f43f5e, #be123c);
+      box-shadow: 0 8px 22px rgba(244,63,94,.10);
+    }
+
+    .btn i {
+      font-size: 15px;
+    }
+
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 18px;
+      padding: 13px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    .notice i {
+      color: var(--blue);
+      margin-top: 2px;
+    }
+
+    .activity {
+      margin-top: 15px;
+      padding: 14px;
+      background: rgba(255,255,255,.02);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .activity-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 9px;
+    }
+
+    #lastAction {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+
+    .footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 11px;
+      margin-top: 35px;
+      line-height: 2;
+    }
+
+    .footer i {
+      color: var(--cyan);
+      margin: 0 4px;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 20px 13px;
+      }
+
+      .topbar {
+        margin-bottom: 38px;
+      }
+
+      .secure-label {
+        font-size: 10px;
+        padding: 9px;
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        padding: 20px;
+      }
+
+      .hero {
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        letter-spacing: -1px;
+      }
+
+      .device-visual {
+        min-height: 210px;
+      }
+
+      .footer {
+        margin-top: 25px;
+      }
+    }
+
+    @media (max-width: 370px) {
+      .brand-name {
+        font-size: 12px;
+      }
+
+      .secure-label {
+        display: none;
+      }
+
+      .panel {
+        padding: 15px;
+      }
+
+      .btn {
+        font-size: 11px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <h2>ESP32 Relay IoT</h2>
-  <div class="card">
-    <h3>Kontrol Relay 1</h3>
-    <p>Koneksi: <span id="connection">Menghubungkan...</span></p>
-    <p>Status relay: <span id="status">Belum diketahui</span></p>
-    <button id="on" disabled>ON</button>
-    <button id="off" disabled>OFF</button>
-    <p id="message">Menunggu koneksi MQTT...</p>
-  </div>
+  <main class="container">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-microchip"></i>
+        </div>
+        <div>
+          <div class="brand-name">NEXUS <span style="color:#22d3ee">IOT</span></div>
+          <div class="brand-sub">DEVICE CONTROL CENTER</div>
+        </div>
+      </div>
+
+      <div class="secure-label">
+        <i class="fa-brands fa-github"></i>
+        <span>ESP32 Dashboard</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">
+        <i class="fa-solid fa-circle"></i>
+        SMART DEVICE MANAGEMENT
+      </div>
+
+      <h1>Control Your <span>World.</span></h1>
+      <p>
+        Kendali perangkat IoT dari mana saja.<br>
+        Sederhana, cepat, dan terintegrasi.
+      </p>
+    </section>
+
+    <section class="dashboard">
+
+      <!-- PANEL PERANGKAT -->
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <div class="small-label">YOUR HARDWARE</div>
+            <h2 style="margin-top:7px">Perangkat Saya</h2>
+          </div>
+
+          <div class="connection-pill" id="connectionPill">
+            <span class="dot"></span>
+            <span id="connection">Menghubungkan</span>
+          </div>
+        </div>
+
+        <div class="device-visual">
+          <div class="chip-icon">
+            <i class="fa-solid fa-microchip"></i>
+          </div>
+          <div class="device-name">ESP32 Controller</div>
+          <div class="device-model">ESP32 DevKit V1 · GPIO 26</div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">JENIS PERANGKAT</div>
+            <div class="metric-value">
+              <i class="fa-solid fa-bolt"></i> Relay 1 CH
+            </div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">KONEKSI</div>
+            <div class="metric-value" id="networkValue">
+              <i class="fa-solid fa-wifi"></i> Menunggu
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- PANEL KONTROL -->
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <div class="small-label">LIVE CONTROL</div>
+            <h2 style="margin-top:7px">Kontrol Relay</h2>
+          </div>
+          <i class="fa-solid fa-sliders" style="color:#22d3ee"></i>
+        </div>
+
+        <div class="relay-display" id="relayDisplay">
+          <div class="relay-icon" id="relayIcon">
+            <i class="fa-solid fa-lightbulb"></i>
+          </div>
+
+          <div class="relay-state" id="relayState">UNKNOWN</div>
+          <div class="relay-caption" id="relayCaption">
+            Menunggu status perangkat
+          </div>
+        </div>
+
+        <div class="control-title">Pilih tindakan</div>
+
+        <div class="controls">
+          <button class="btn btn-on" id="btnON" disabled>
+            <i class="fa-solid fa-power-off"></i>
+            TURN ON
+          </button>
+
+          <button class="btn btn-off" id="btnOFF" disabled>
+            <i class="fa-solid fa-power-off"></i>
+            TURN OFF
+          </button>
+        </div>
+
+        <div class="notice">
+          <i class="fa-solid fa-circle-info"></i>
+          <span id="message">
+            Menghubungkan ke server MQTT. Tombol aktif setelah koneksi tersedia.
+          </span>
+        </div>
+
+        <div class="activity">
+          <div class="activity-head">
+            <span>AKTIVITAS TERAKHIR</span>
+            <i class="fa-regular fa-clock" style="color:#22d3ee"></i>
+          </div>
+          <div id="lastAction">Belum ada aktivitas.</div>
+        </div>
+      </article>
+
+    </section>
+
+    <footer class="footer">
+      <div><i class="fa-solid fa-microchip"></i> NEXUS IoT CONTROL CENTER</div>
+      <div>Powered by ESP32 · MQTT · GitHub Pages</div>
+      <div>Personal IoT Dashboard © <span id="year"></span></div>
+    </footer>
+
+  </main>
 
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
   <script>
-    // Gunakan topic yang sama dengan program ESP32.
-    const topicControl = "esp32relay/7f3a9c2e/control";
-    const topicStatus  = "esp32relay/7f3a9c2e/status";
+    // ==========================================
+    // KONFIGURASI MQTT
+    // Harus sama dengan program ESP32.
+    // ==========================================
 
-    const connection = document.getElementById("connection");
-    const status = document.getElementById("status");
+    const MQTT_HOST = "wss://broker.hivemq.com:8884/mqtt";
+
+    const TOPIC_CONTROL = "esp32relay/7f3a9c2e/control";
+    const TOPIC_STATUS  = "esp32relay/7f3a9c2e/status";
+
+    // ==========================================
+    // ELEMEN DASHBOARD
+    // ==========================================
+
+    const connectionEl = document.getElementById("connection");
+    const connectionPill = document.getElementById("connectionPill");
+    const networkValue = document.getElementById("networkValue");
+    const relayDisplay = document.getElementById("relayDisplay");
+    const relayIcon = document.getElementById("relayIcon");
+    const relayState = document.getElementById("relayState");
+    const relayCaption = document.getElementById("relayCaption");
     const message = document.getElementById("message");
-    const onButton = document.getElementById("on");
-    const offButton = document.getElementById("off");
+    const lastAction = document.getElementById("lastAction");
+    const btnON = document.getElementById("btnON");
+    const btnOFF = document.getElementById("btnOFF");
 
-    const client = mqtt.connect(
-      "wss://broker.hivemq.com:8884/mqtt",
-      {
-        clientId: "web_" + Math.random().toString(16).slice(2, 12),
-        clean: true,
-        connectTimeout: 10000,
-        reconnectPeriod: 3000
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
+
+    let latestStatus = null;
+    let pendingCommand = null;
+    let commandTimeout = null;
+
+    function setConnection(online, label) {
+      connectionEl.textContent = label;
+      connectionPill.classList.toggle("online", online);
+      connectionPill.classList.toggle("offline", !online);
+
+      networkValue.innerHTML = online
+        ? '<i class="fa-solid fa-wifi"></i> Online'
+        : '<i class="fa-solid fa-wifi"></i> Offline';
+
+      btnON.disabled = !online || pendingCommand !== null;
+      btnOFF.disabled = !online || pendingCommand !== null;
+    }
+
+    function renderRelay(value) {
+      latestStatus = value;
+
+      relayState.classList.toggle("on", value === "ON");
+      relayState.textContent = value;
+
+      relayDisplay.classList.toggle("active", value === "ON");
+
+      relayIcon.innerHTML = value === "ON"
+        ? '<i class="fa-solid fa-lightbulb"></i>'
+        : '<i class="fa-regular fa-lightbulb"></i>';
+
+      relayCaption.textContent = value === "ON"
+        ? "Relay dalam keadaan aktif"
+        : "Relay dalam keadaan tidak aktif";
+
+      if (pendingCommand === value) {
+        clearTimeout(commandTimeout);
+        pendingCommand = null;
+        message.textContent = "Status perangkat berhasil diperbarui.";
+        lastAction.textContent =
+          value + " · Status dikonfirmasi ESP32 · " +
+          new Date().toLocaleString("id-ID");
       }
-    );
 
-    client.on("connect", () => {
-      connection.textContent = "Terhubung";
-      message.textContent = "Siap mengirim perintah.";
-      onButton.disabled = false;
-      offButton.disabled = false;
+      if (client && client.connected) {
+        btnON.disabled = pendingCommand !== null;
+        btnOFF.disabled = pendingCommand !== null;
+      }
+    }
 
-      client.subscribe(topicStatus, (err) => {
-        if (err) message.textContent = "Gagal berlangganan status.";
+    // ==========================================
+    // KONEKSI MQTT
+    // ==========================================
+
+    const client = mqtt.connect(MQTT_HOST, {
+      clientId: "nexus_web_" +
+        Math.random().toString(16).slice(2, 12),
+      clean: true,
+      connectTimeout: 10000,
+      reconnectPeriod: 3000
+    });
+
+    client.on("connect", function () {
+      setConnection(true, "Terhubung");
+      message.textContent =
+        "Server MQTT terhubung. Menunggu status ESP32.";
+
+      client.subscribe(TOPIC_STATUS, function (err) {
+        if (err) {
+          message.textContent = "Gagal berlangganan status.";
+          return;
+        }
+
+        message.textContent =
+          "Terhubung ke MQTT. Menunggu pembaruan status relay.";
       });
     });
 
-    client.on("reconnect", () => {
-      connection.textContent = "Menghubungkan ulang...";
-      onButton.disabled = true;
-      offButton.disabled = true;
+    client.on("reconnect", function () {
+      setConnection(false, "Menghubungkan ulang");
+      message.textContent = "Mencoba menghubungkan ulang...";
     });
 
-    client.on("error", () => {
-      connection.textContent = "Koneksi bermasalah";
+    client.on("offline", function () {
+      setConnection(false, "Offline");
+      message.textContent = "Koneksi MQTT terputus.";
     });
 
-    client.on("offline", () => {
-      connection.textContent = "Offline";
-      onButton.disabled = true;
-      offButton.disabled = true;
+    client.on("close", function () {
+      setConnection(false, "Terputus");
     });
 
-    client.on("message", (topic, payload) => {
-      if (topic === topicStatus) {
-        const value = payload.toString();
-        status.textContent =
-          value === "ON" ? "ON" :
-          value === "OFF" ? "OFF" : value;
+    client.on("error", function (err) {
+      console.error("MQTT error:", err.message);
+      message.textContent = "Koneksi bermasalah. Periksa internet.";
+    });
+
+    client.on("message", function (topic, payload) {
+      if (topic !== TOPIC_STATUS) return;
+
+      const value = payload.toString().trim().toUpperCase();
+
+      if (value === "ON" || value === "OFF") {
+        renderRelay(value);
       }
     });
 
-    function sendCommand(value) {
+    // ==========================================
+    // KIRIM PERINTAH KE ESP32
+    // ==========================================
+
+    function sendCommand(command) {
       if (!client.connected) {
-        message.textContent = "Belum terhubung ke MQTT.";
+        message.textContent = "MQTT belum terhubung.";
         return;
       }
 
-      client.publish(topicControl, value, { qos: 0 }, (err) => {
-        message.textContent = err
-          ? "Perintah gagal dikirim."
-          : "Perintah " + value + " dikirim; menunggu status ESP32.";
-      });
+      if (pendingCommand !== null) {
+        message.textContent = "Tunggu konfirmasi perintah sebelumnya.";
+        return;
+      }
+
+      if (latestStatus === command) {
+        message.textContent = "Relay sudah dalam kondisi " + command + ".";
+        return;
+      }
+
+      pendingCommand = command;
+      btnON.disabled = true;
+      btnOFF.disabled = true;
+
+      message.textContent = "Mengirim perintah " + command + "...";
+      lastAction.textContent =
+        "Perintah " + command + " dikirim · Menunggu konfirmasi ESP32";
+
+      client.publish(
+        TOPIC_CONTROL,
+        command,
+        { qos: 0, retain: false },
+        function (err) {
+          if (err) {
+            pendingCommand = null;
+            message.textContent = "Gagal mengirim perintah.";
+            setConnection(client.connected, client.connected
+              ? "Terhubung" : "Terputus");
+          }
+        }
+      );
+
+      commandTimeout = setTimeout(function () {
+        if (pendingCommand !== command) return;
+
+        pendingCommand = null;
+        btnON.disabled = !client.connected;
+        btnOFF.disabled = !client.connected;
+
+        message.textContent =
+          "Belum ada konfirmasi ESP32. Periksa perangkat dan topic MQTT.";
+      }, 8000);
     }
 
-    onButton.addEventListener("click", () => sendCommand("ON"));
-    offButton.addEventListener("click", () => sendCommand("OFF"));
+    btnON.addEventListener("click", function () {
+      sendCommand("ON");
+    });
+
+    btnOFF.addEventListener("click", function () {
+      sendCommand("OFF");
+    });
   </script>
 </body>
 </html>
